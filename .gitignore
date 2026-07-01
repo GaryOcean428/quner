@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+
+# Test / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# quner runtime artifacts (never commit host state)
+/var-lib-quner/
+*.rollback.json
+sandbox/_run/
+sandbox/fake-sys/
+
+# Editor / OS
+.DS_Store
+*.swp

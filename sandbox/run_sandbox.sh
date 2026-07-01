@@ -38,6 +38,7 @@ export QUNER_NVIDIA_SMI="$MOCK"
 export QUNER_STATE_DIR="$STATE"
 export QUNER_RUN_DIR="$RUNDIR"
 export QUNER_SYSTEMD_DIR="$SYSD"
+export QUNER_LAUNCHER_PATH="$RUN/bin/quner-launcher"   # never touch real /usr/local/bin
 
 step "1. build fake /sys"
 bash "$HERE/make_fake_sys.sh" "$FAKESYS" 4
@@ -82,6 +83,7 @@ step "8. install (dry-run, then real into the sandbox systemd dir) + verify"
 "$QUNER" install --dry-run >/dev/null && pass "install --dry-run wrote nothing"
 PATH="$RUN/bin:$PATH" "$QUNER" install >/dev/null
 test -f "$SYSD/quner.service" && pass "units written to sandbox systemd dir"
+test -f "$QUNER_LAUNCHER_PATH" && grep -q "quner-launcher" "$QUNER_LAUNCHER_PATH" && pass "root-visible launcher dropped"
 if command -v systemd-analyze >/dev/null 2>&1; then
   systemd-analyze verify "$SYSD/quner.service" && pass "systemd-analyze verify clean"
 else

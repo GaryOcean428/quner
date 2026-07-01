@@ -44,6 +44,8 @@ def test_install_writes_units(tmp_path, monkeypatch, fake_sys):
     sysd = tmp_path / "sysd"
     monkeypatch.setenv("QUNER_SYSTEMD_DIR", str(sysd))
     monkeypatch.setenv("QUNER_STATE_DIR", str(tmp_path / "state"))  # baseline capture
+    monkeypatch.setenv("QUNER_LAUNCHER_PATH", str(tmp_path / "bin" / "quner"))
+    (tmp_path / "bin").mkdir()
     monkeypatch.setattr(service, "_systemctl", lambda *a: 0)
     paths = service.install(dry_run=False)
     assert (sysd / "quner.service").exists()
@@ -51,10 +53,39 @@ def test_install_writes_units(tmp_path, monkeypatch, fake_sys):
     assert any(p.endswith("quner.service") for p in paths)
 
 
+def test_launcher_written_and_removed(tmp_path, monkeypatch, fake_sys):
+    monkeypatch.setenv("QUNER_SYSTEMD_DIR", str(tmp_path / "sysd"))
+    monkeypatch.setenv("QUNER_STATE_DIR", str(tmp_path / "state"))
+    (tmp_path / "bin").mkdir()
+    monkeypatch.setenv("QUNER_LAUNCHER_PATH", str(tmp_path / "bin" / "quner"))
+    monkeypatch.setattr(service, "_systemctl", lambda *a: 0)
+    service.install(dry_run=False)
+    launcher = tmp_path / "bin" / "quner"
+    assert launcher.exists() and "quner-launcher" in launcher.read_text()
+    service.uninstall(dry_run=False)
+    assert not launcher.exists()
+
+
+def test_launcher_never_clobbers_existing(tmp_path, monkeypatch, fake_sys):
+    monkeypatch.setenv("QUNER_SYSTEMD_DIR", str(tmp_path / "sysd"))
+    monkeypatch.setenv("QUNER_STATE_DIR", str(tmp_path / "state"))
+    (tmp_path / "bin").mkdir()
+    lp = tmp_path / "bin" / "quner"
+    lp.write_text("#!/bin/sh\nreal system binary\n")   # not ours
+    monkeypatch.setenv("QUNER_LAUNCHER_PATH", str(lp))
+    monkeypatch.setattr(service, "_systemctl", lambda *a: 0)
+    service.install(dry_run=False)
+    assert lp.read_text() == "#!/bin/sh\nreal system binary\n"   # untouched
+    service.uninstall(dry_run=False)
+    assert lp.exists()                                           # not ours -> kept
+
+
 def test_uninstall_removes_units(tmp_path, monkeypatch):
     sysd = tmp_path / "sysd"
     monkeypatch.setenv("QUNER_SYSTEMD_DIR", str(sysd))
     monkeypatch.setenv("QUNER_STATE_DIR", str(tmp_path / "state"))
+    monkeypatch.setenv("QUNER_LAUNCHER_PATH", str(tmp_path / "bin" / "quner"))
+    (tmp_path / "bin").mkdir()
     monkeypatch.setattr(service, "_systemctl", lambda *a: 0)
     service.install(dry_run=False)
     service.uninstall(dry_run=False)

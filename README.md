@@ -10,19 +10,34 @@ point — not max clock / max TDP — then holds it. Absent levers are reported,
 silently ignored. Everything is reversible; nothing destructive happens without
 you asking for it.
 
+**Recommended — install system-wide so `root`/`sudo` finds it directly:**
+
 ```bash
-pipx install quner
-quner doctor                       # what levers this host exposes (no root needed)
-sudo "$(which quner)" install      # drops a root systemd service + re-tune timer
-sudo "$(which quner)" selftest     # transient, auto-reverting proof the levers work
+sudo pipx --global install quner     # or: sudo pip install quner
+sudo quner install                    # just works — drops the service + timer
+quner doctor                          # what levers this host exposes
+sudo quner selftest                   # transient, auto-reverting proof
 ```
 
-> **Why `sudo "$(which quner)"` and not just `sudo quner`?** `pipx` installs the
-> `quner` binary into your **user** `~/.local/bin`, which isn't on `root`'s
-> `PATH` — so a bare `sudo quner` gives `command not found`. `sudo "$(which quner)"`
-> (or `sudo env "PATH=$PATH" quner …`) runs the binary you actually installed.
-> Alternatively install it system-wide so root sees it directly:
-> `sudo pipx --global install quner` (or `sudo pip install quner`).
+**Alternative — per-user pipx install:**
+
+```bash
+pipx install quner
+quner doctor
+sudo "$(which quner)" install         # see note below
+```
+
+> **Why `sudo "$(which quner)"` for a per-user install?** `pipx` puts the binary
+> in your **user** `~/.local/bin`, which isn't on `root`'s `PATH` — so a bare
+> `sudo quner` gives `command not found`. `sudo "$(which quner)"` (or
+> `sudo env "PATH=$PATH" quner …`) runs the binary you installed. **After that
+> first install, quner drops a `/usr/local/bin/quner` launcher**, so plain
+> `sudo quner …` works from then on (`uninstall` removes it).
+>
+> **PATH note:** `pipx ensurepath` appends to `~/.bashrc`, which only a **login**
+> shell sources — open a new *login* shell / re-login (a plain terminal tab or a
+> non-interactive `ssh host 'cmd'` may not pick it up). The system-wide install
+> above avoids this entirely.
 
 The efficiency principle derives from QIG experiment **EXP-132** (work-per-joule
 peaks at an interior operating point); `quner` re-measures the optimum on *your*

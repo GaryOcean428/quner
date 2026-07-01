@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.1.3 — 2026-07-01
+
+Follow-up to fresh-machine feedback (cold-install VM + zero-lever host). The
+`sudo quner install` → "command not found" gotcha (pipx installs to the user's
+`~/.local/bin`, off root's PATH) is now addressed in the tool, not just the docs:
+
+- **`quner install` drops a root-visible `/usr/local/bin/quner` launcher** (only
+  if absent — never clobbers an existing binary), so plain `sudo quner …` works
+  after the first install. `uninstall` removes it (only if it's ours).
+- **README leads with the system-wide install** (`sudo pipx --global install
+  quner`) that avoids the PATH issue entirely, and documents the precise
+  requirement that `pipx ensurepath` needs a **login** shell (not just any new
+  terminal / non-interactive ssh).
+- Path is env-overridable (`QUNER_LAUNCHER_PATH`) and exercised in the sandbox.
+
+Everything else in Parts 3–4 validated with **no bugs**: 3-tick profile
+hysteresis (both directions, under real `stress-ng` load), turbostat-corroborated
+RAPL telemetry, and fail-loud degradation on a zero-lever VM (doctor/selftest/
+status/tune/daemon/timer — no crashes).
+
 ## 0.1.2 — 2026-07-01
 
 Driven by fresh-machine feedback (Ubuntu 24.04 / NVIDIA T550). Confirmed bugs fixed:

@@ -28,7 +28,7 @@ __all__ = [
     "SYSFS_ROOT", "PROC_ROOT", "nvidia_smi",
     "gpu_power_limit_range_w", "read_gpu_power_w", "set_gpu_power_limit_w",
     "PowerSampler",
-    "rapl_available", "read_rapl_energy_uj", "rapl_delta_j",
+    "rapl_available", "read_rapl_energy_uj", "rapl_delta_j", "rapl_package_dirs",
     "cpufreq_available", "available_governors", "current_governor", "set_governor",
     "EnergyReading", "EnergySampler", "telemetry_status",
 ]
@@ -171,6 +171,11 @@ def _rapl_root() -> str:
 
 def rapl_available() -> bool:
     return bool(_rapl_package_dirs())
+
+
+def rapl_package_dirs() -> list[str]:
+    """Absolute paths of the top-level RAPL package domains (public accessor)."""
+    return _rapl_package_dirs()
 
 
 def _rapl_package_dirs() -> list[str]:

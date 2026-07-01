@@ -1,6 +1,6 @@
 [project]
 name = "quner"
-version = "0.1.0"
+version = "0.1.1"
 description = "Portable Linux efficiency daemon — tunes CPU governor / RAPL / GPU power-cap to the work-per-joule optimum."
 readme = "README.md"
 requires-python = ">=3.10"

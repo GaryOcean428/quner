@@ -61,7 +61,10 @@ def capabilities() -> dict:
         "rapl": {
             "available": t.rapl_available(),
             "detail": (f"packages: {', '.join(rapl_pkgs)}" if rapl_pkgs
-                       else "no intel-rapl powercap (not exposed here)"),
+                       else ("intel-rapl present; energy counter is root-only "
+                             "(full readout under the daemon/root)"
+                             if t.rapl_available()
+                             else "no intel-rapl powercap (not exposed here)")),
         },
         "gpu_cap": {
             "available": gpu_rng is not None,

@@ -22,6 +22,19 @@ def test_fake_tree_governor_and_rapl_available(fake_sys):
     assert "performance" in caps["governor"]["detail"]
 
 
+def test_rapl_dirs_present_but_energy_root_only(tmp_path, monkeypatch):
+    # intel-rapl dir exists but energy_uj is unreadable/absent (non-root reality)
+    root = tmp_path / "sys"
+    rp = root / "class/powercap/intel-rapl:0"
+    rp.mkdir(parents=True)
+    (rp / "constraint_0_name").write_text("long_term\n")  # dir present, no energy_uj
+    monkeypatch.setenv("QUNER_SYSFS_ROOT", str(root))
+    monkeypatch.setenv("QUNER_NVIDIA_SMI", "/nonexistent")
+    caps = detect.capabilities()
+    assert caps["rapl"]["available"] is True
+    assert "root-only" in caps["rapl"]["detail"]        # honest, not "not exposed"
+
+
 def test_fingerprint_stable_and_short(fake_sys):
     fp1 = detect.host_fingerprint()
     fp2 = detect.host_fingerprint()

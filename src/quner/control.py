@@ -20,7 +20,7 @@ from quner import telemetry as t
 __all__ = [
     "STATE_DIR", "ROLLBACK_PATH",
     "rapl_pl1_max_w", "read_rapl_pl1_uw", "set_rapl_pl1_w",
-    "snapshot", "restore",
+    "snapshot", "restore", "ensure_baseline", "clear_rollback",
 ]
 
 
@@ -115,6 +115,32 @@ def snapshot(persist: bool = True) -> dict:
         with open(ROLLBACK_PATH(), "w") as fh:
             json.dump(snap, fh, indent=2)
     return snap
+
+
+def ensure_baseline() -> dict:
+    """Return the pristine pre-quner baseline, capturing it ONCE.
+
+    Snapshots the host state only if no rollback file exists yet (install-time /
+    first-ever boot). On a crash-restart the file already exists, so the true
+    pre-quner state is preserved instead of re-snapshotting an already-tuned
+    host (which would silently lose the real baseline). See daemon.serve().
+    """
+    if os.path.exists(ROLLBACK_PATH()):
+        try:
+            with open(ROLLBACK_PATH()) as fh:
+                return json.load(fh)
+        except (OSError, ValueError):
+            pass  # corrupt file → re-snapshot below
+    return snapshot(persist=True)
+
+
+def clear_rollback() -> None:
+    """Delete the persisted baseline (called by ``uninstall`` after restore, so a
+    later re-install captures a fresh pristine baseline)."""
+    try:
+        os.remove(ROLLBACK_PATH())
+    except OSError:
+        pass
 
 
 def restore(snap: dict | None = None) -> dict[str, bool]:

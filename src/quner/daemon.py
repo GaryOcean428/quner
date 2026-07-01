@@ -19,10 +19,21 @@ import signal
 import time
 
 from quner import control, detect, memguard, profiles, tune
+from quner import telemetry as t
 
 
 def RUN_DIR() -> str:
     return os.environ.get("QUNER_RUN_DIR", "/run/quner")
+
+
+def _current_operating_point() -> dict:
+    """Ground-truth read-back of what is ACTUALLY set on the hardware right now
+    (may differ from this loop's own decision if the re-tune timer changed it)."""
+    return {
+        "governor": t.current_governor(),
+        "gpu_cap_w": t.read_gpu_power_limit_w(),
+        "rapl_pl1_uw": control.read_rapl_pl1_uw(),
+    }
 
 
 def write_status(status: dict) -> str:
@@ -47,6 +58,7 @@ def run_once(detector: profiles.Detector, *, dry_run: bool = False,
         "profile": profile,
         "target_state": target.label(),
         "applied": applied,
+        "current": _current_operating_point(),   # actual hardware state right now
         "memguard": mg,
         "dry_run": dry_run,
         "capabilities": {k: v["available"] for k, v in detect.capabilities().items()},
@@ -72,7 +84,7 @@ def serve(interval: float = 10.0, dry_run: bool = False,
           memguard_on: bool = False) -> None:
     """The service loop: snapshot baseline, tick until SIGTERM/SIGINT, restore."""
     if not dry_run:
-        control.snapshot()  # baseline for ExecStop / crash restore
+        control.ensure_baseline()  # capture pristine baseline ONCE (crash-safe)
     detector = profiles.Detector()
     stop = {"v": False}
 

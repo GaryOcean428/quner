@@ -18,7 +18,8 @@ from quner.telemetry import PROC_ROOT
 
 # Never target these — losing them costs you the session or the box.
 CRITICAL_NAMES = frozenset({
-    "systemd", "init", "sshd", "sudo", "dbus-daemon", "quner", "bash", "login",
+    "systemd", "init", "sshd", "sudo", "dbus-daemon", "quner", "login",
+    "bash", "zsh", "fish", "sh", "dash", "systemd-logind",
 })
 
 

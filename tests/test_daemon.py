@@ -21,6 +21,14 @@ def test_run_once_writes_status(fake_sys, tmp_path, monkeypatch):
     assert "capabilities" in written
 
 
+def test_status_has_current_operating_point(fake_sys, tmp_path, monkeypatch):
+    monkeypatch.setenv("QUNER_RUN_DIR", str(tmp_path / "run"))
+    st = daemon.run_once(Detector(ticks=1), dry_run=True)
+    assert "current" in st
+    assert st["current"]["governor"] == "powersave"       # actual hardware read-back
+    assert "rapl_pl1_uw" in st["current"]
+
+
 def test_run_once_dry_run_does_not_change_real_governor(fake_sys, tmp_path, monkeypatch):
     monkeypatch.setenv("QUNER_RUN_DIR", str(tmp_path / "run"))
     before = (fake_sys / "devices/system/cpu/cpu0/cpufreq/scaling_governor").read_text()

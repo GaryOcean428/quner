@@ -50,6 +50,26 @@ Restart=on-failure
 RestartSec=5
 Nice=5
 
+# quner-managed writable dirs (created + RW even under ProtectSystem=strict)
+StateDirectory=quner
+RuntimeDirectory=quner
+
+# Sandboxing — safe for a root daemon that only touches sysfs + nvidia-smi.
+# NB: ProtectKernelTunables is intentionally OFF (it would block the sysfs
+# governor/RAPL writes); ProtectHome is read-only (not full) so a pipx-installed
+# interpreter under /home stays executable.
+NoNewPrivileges=yes
+ProtectHome=read-only
+ProtectSystem=strict
+ProtectControlGroups=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectClock=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+RestrictNamespaces=yes
+LockPersonality=yes
+
 [Install]
 WantedBy=multi-user.target
 """
@@ -65,7 +85,7 @@ After=quner.service
 [Service]
 Type=oneshot
 User=root
-ExecStart={q} tune --apply
+ExecStart={q} retune
 """
 
 
@@ -116,6 +136,8 @@ def install(dry_run: bool = False, interval: str = "30min") -> list[str]:
     for name, text in units.items():
         with open(os.path.join(d, name), "w") as fh:
             fh.write(text)
+    from quner import control
+    control.ensure_baseline()   # capture the pristine baseline NOW, before tuning
     _systemctl("daemon-reload")
     _systemctl("enable", "--now", SERVICE)
     _systemctl("enable", "--now", RETUNE_TIMER)
@@ -143,6 +165,7 @@ def uninstall(dry_run: bool = False) -> list[str]:
     _systemctl("daemon-reload")
     from quner import control
     control.restore()
+    control.clear_rollback()   # so a later re-install captures a fresh baseline
     return removed
 
 

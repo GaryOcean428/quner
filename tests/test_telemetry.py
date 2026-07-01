@@ -47,6 +47,7 @@ def test_gpu_unavailable_when_no_smi(fake_sys):
     # fake_sys points QUNER_NVIDIA_SMI at a nonexistent path
     assert t.nvidia_smi() is None
     assert t.gpu_power_limit_range_w() is None
+    assert t.read_gpu_power_limit_w() is None
     assert t.set_gpu_power_limit_w(30) is False
 
 

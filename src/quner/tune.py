@@ -266,9 +266,9 @@ def tune(run: WorkFn, states: list[OperatingState] | None = None,
     best = max(valid, key=key)
     rep.best_state, rep.best_value = best.state, key(best)
 
-    # Confidence band (EXP-132 invariant-band methodology): states within ±1.91%
-    # of the best are statistically indistinguishable, so the optimum is only
-    # "real" if it stands out of the band.
+    # Fixed ±1.91% tie-break band imported from EXP-132 (a heuristic threshold,
+    # NOT a per-host confidence interval): states within it are treated as
+    # indistinguishable, so the optimum is only "real" if it stands out.
     rep.band_lo = rep.best_value * (1 - EXP132_INVARIANT_BAND_REL)
     rep.band_hi = rep.best_value * (1 + EXP132_INVARIANT_BAND_REL)
     rep.states_within_band = sum(1 for s in valid if key(s) >= rep.band_lo)

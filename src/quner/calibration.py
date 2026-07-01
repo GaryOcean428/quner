@@ -35,6 +35,8 @@ def principle() -> str:
         f"(lattice h={EXP132_INTERIOR_OPTIMUM_H}), not at maximum drive. "
         "Silicon analogue (re-measured per host, not imported): total-system "
         "work-per-joule peaks at an interior CPU/GPU operating point, not at "
-        "max clock / max TDP. Optimum certified with a confidence band, per the "
-        f"±{EXP132_INVARIANT_BAND_REL * 100:.2f}% invariant-band methodology."
+        f"max clock / max TDP. The ±{EXP132_INVARIANT_BAND_REL * 100:.2f}% band "
+        "is a FIXED tie-break threshold imported from EXP-132 (states within it "
+        "are treated as indistinguishable) — a heuristic, NOT a per-host variance "
+        "or confidence interval computed from repeated trials."
     )

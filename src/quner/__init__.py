@@ -6,4 +6,4 @@ heavy-compute profiles. Capability-detecting and fail-loud: it tunes whatever
 levers a host exposes and reports the absent ones rather than silently no-op'ing.
 """
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"

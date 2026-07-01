@@ -27,7 +27,7 @@ from dataclasses import dataclass, field
 __all__ = [
     "SYSFS_ROOT", "PROC_ROOT", "nvidia_smi",
     "gpu_power_limit_range_w", "read_gpu_power_w", "set_gpu_power_limit_w",
-    "PowerSampler",
+    "read_gpu_power_limit_w", "PowerSampler",
     "rapl_available", "read_rapl_energy_uj", "rapl_delta_j", "rapl_package_dirs",
     "cpufreq_available", "available_governors", "current_governor", "set_governor",
     "EnergyReading", "EnergySampler", "telemetry_status",
@@ -68,6 +68,22 @@ def gpu_power_limit_range_w() -> tuple[float, float] | None:
         ).strip().splitlines()[0]
         lo, hi = (float(x) for x in out.split(","))
         return lo, hi
+    except Exception:
+        return None
+
+
+def read_gpu_power_limit_w() -> float | None:
+    """Current enforced GPU power-cap in watts (the value ``set_gpu_power_limit_w``
+    last set / the driver default), or None."""
+    smi = nvidia_smi()
+    if smi is None:
+        return None
+    try:
+        out = subprocess.check_output(
+            [smi, "--query-gpu=power.limit", "--format=csv,noheader,nounits"],
+            text=True, timeout=10,
+        ).strip().splitlines()[0]
+        return float(out)
     except Exception:
         return None
 

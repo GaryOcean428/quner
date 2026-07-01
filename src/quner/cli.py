@@ -74,7 +74,24 @@ def _cmd_tune(args) -> int:
     from quner import tune
     run = tune.command_runner(args.command) if args.command \
         else tune.command_runner("sleep 0.1")
-    rep = tune.tune(run, apply=args.apply, reps=args.reps)
+    # For a CPU-only workload the GPU-cap sweep only measures GPU *idle*-power
+    # differences (noise), which can fake an "interior optimum". --no-gpu limits
+    # the sweep to CPU governors.
+    states = tune.default_states(gpu_caps_w=[None]) if args.no_gpu else None
+    rep = tune.tune(run, states=states, apply=args.apply, reps=args.reps)
+    _print(rep.as_dict())
+    return 0
+
+
+def _cmd_retune(_args) -> int:
+    """Exploratory re-tune for the CURRENT profile → cache + hold the result.
+    Refused while training (never sweep power mid-run). Used by the timer."""
+    from quner import daemon, profiles
+    profile = profiles.Detector(ticks=1).update()
+    rep = daemon.retune(profile)
+    if rep is None:
+        print(f"retune skipped — profile={profile} (never sweep power during a run)")
+        return 0
     _print(rep.as_dict())
     return 0
 
@@ -187,7 +204,12 @@ def _build_parser() -> argparse.ArgumentParser:
     tu.add_argument("--command", help="workload command to profile")
     tu.add_argument("--apply", action="store_true", help="apply + hold the chosen state")
     tu.add_argument("--reps", type=int, default=3)
+    tu.add_argument("--no-gpu", action="store_true",
+                    help="sweep CPU governors only (use for CPU-only workloads; "
+                         "the GPU-cap sweep otherwise measures GPU idle-power noise)")
     tu.set_defaults(func=_cmd_tune)
+
+    sub.add_parser("retune", help="re-tune the current profile + cache it").set_defaults(func=_cmd_retune)
 
     ins = sub.add_parser("install", help="install the systemd service + timer")
     ins.add_argument("--dry-run", action="store_true")

@@ -34,3 +34,17 @@ def test_snapshot_restore_roundtrip(fake_sys, monkeypatch, tmp_path):
 def test_restore_missing_file_is_noop(tmp_path, monkeypatch):
     monkeypatch.setenv("QUNER_STATE_DIR", str(tmp_path / "nostate"))
     assert c.restore() == {}
+
+
+def test_ensure_baseline_captures_once(fake_sys, monkeypatch, tmp_path):
+    monkeypatch.setenv("QUNER_STATE_DIR", str(tmp_path / "state"))
+    b1 = c.ensure_baseline()
+    assert b1["governor"] == "powersave"
+    # perturb, then ensure_baseline again -> must return the ORIGINAL (crash-safe)
+    t.set_governor("performance")
+    b2 = c.ensure_baseline()
+    assert b2["governor"] == "powersave"        # preserved, not re-snapshotted
+    # after clear, it re-captures the (now perturbed) state
+    c.clear_rollback()
+    b3 = c.ensure_baseline()
+    assert b3["governor"] == "performance"

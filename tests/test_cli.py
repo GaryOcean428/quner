@@ -47,3 +47,23 @@ def test_selftest_passes_on_fake_tree(fake_sys, monkeypatch, tmp_path, capsys):
 
 def test_memguard_dry_run(fake_proc_lowmem, capsys):
     assert main(["memguard", "--dry-run"]) == 0
+
+
+def test_retune_command_dispatches(fake_sys, monkeypatch, capsys):
+    from quner import daemon
+    monkeypatch.setattr(daemon, "retune", lambda profile, work_fn=None: None)
+    assert main(["retune"]) == 0
+    assert "retune skipped" in capsys.readouterr().out
+
+
+def test_tune_no_gpu_restricts_sweep(fake_sys, monkeypatch):
+    from quner import tune
+    captured = {}
+
+    def fake_tune(run, states=None, **kw):
+        captured["states"] = states
+        return tune.TuneReport()
+
+    monkeypatch.setattr(tune, "tune", fake_tune)
+    assert main(["tune", "--no-gpu", "--command", "true"]) == 0
+    assert captured["states"] and all(s.gpu_cap_w is None for s in captured["states"])

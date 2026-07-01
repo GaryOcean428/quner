@@ -12,11 +12,17 @@ you asking for it.
 
 ```bash
 pipx install quner
-sudo quner install        # drops a root systemd service + re-tune timer
-quner doctor              # what levers this host exposes
-quner status              # current profile + operating point + energy
-quner selftest            # transient, auto-reverting proof the levers work here
+quner doctor                       # what levers this host exposes (no root needed)
+sudo "$(which quner)" install      # drops a root systemd service + re-tune timer
+sudo "$(which quner)" selftest     # transient, auto-reverting proof the levers work
 ```
+
+> **Why `sudo "$(which quner)"` and not just `sudo quner`?** `pipx` installs the
+> `quner` binary into your **user** `~/.local/bin`, which isn't on `root`'s
+> `PATH` — so a bare `sudo quner` gives `command not found`. `sudo "$(which quner)"`
+> (or `sudo env "PATH=$PATH" quner …`) runs the binary you actually installed.
+> Alternatively install it system-wide so root sees it directly:
+> `sudo pipx --global install quner` (or `sudo pip install quner`).
 
 The efficiency principle derives from QIG experiment **EXP-132** (work-per-joule
 peaks at an interior operating point); `quner` re-measures the optimum on *your*

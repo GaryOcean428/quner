@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Mock nvidia-smi for the quner Layer-A sandbox. Answers exactly the queries
+# quner makes, so the GPU code paths run with zero real hardware. `-pl` is a
+# no-op success. Point QUNER_NVIDIA_SMI at this file.
+args="$*"
+case "$args" in
+  *power.min_limit*|*min_limit*) echo "1.00, 50.00" ;;
+  *power.draw*)                  echo "5.0" ;;
+  *utilization.gpu*)             echo "10" ;;
+  *--query-gpu=name*|*query-gpu=name*) echo "NVIDIA GeForce GTX 1650 Ti (mock)" ;;
+  *-pl*)                         exit 0 ;;   # accept a power-cap set
+  *)                             echo "" ;;
+esac
+exit 0

@@ -24,6 +24,7 @@ from quner import control
 from quner.calibration import EXP132_INVARIANT_BAND_REL, principle
 from quner.telemetry import (
     EnergySampler,
+    available_governors,
     current_governor,
     gpu_power_limit_range_w,
     set_governor,
@@ -199,8 +200,10 @@ def default_states(cpu_governors: list[str] | None = None,
                    gpu_caps_w: list[float | None] | None = None,
                    ) -> list[OperatingState]:
     """Cartesian sweep of governors × GPU caps over whatever the host exposes.
-    Falls back to a single ``default`` state when neither is controllable (VM)."""
-    govs: list[str | None] = list(cpu_governors) if cpu_governors else [None]
+    Governors default to the host's live ``available_governors()``; falls back to
+    a single ``default`` state when neither subsystem is controllable (VM)."""
+    govs: list[str | None] = (list(cpu_governors) if cpu_governors is not None
+                              else (available_governors() or [None]))
     caps: list[float | None] = (list(gpu_caps_w) if gpu_caps_w is not None
                                 else _gpu_cap_sweep())
     states = [OperatingState(gpu_cap_w=c, cpu_governor=g) for g in govs for c in caps]

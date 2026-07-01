@@ -25,6 +25,26 @@ def fake_sys(tmp_path, monkeypatch):
 
 
 @pytest.fixture
+def fake_nvidia(tmp_path, monkeypatch):
+    """A mock nvidia-smi so a host reads as 'NVIDIA present'."""
+    smi = tmp_path / "nvidia-smi"
+    smi.write_text(
+        "#!/usr/bin/env bash\n"
+        'case "$*" in\n'
+        "  *name*) echo 'NVIDIA GeForce GTX 1650 Ti' ;;\n"
+        "  *min_limit*) echo '1.00, 50.00' ;;\n"
+        "  *power.draw*) echo '5.0' ;;\n"
+        "  *utilization*) echo '10' ;;\n"
+        "  *-pl*) exit 0 ;;\n"
+        "  *) echo '' ;;\n"
+        "esac\n"
+    )
+    smi.chmod(0o755)
+    monkeypatch.setenv("QUNER_NVIDIA_SMI", str(smi))
+    return smi
+
+
+@pytest.fixture
 def fake_proc_lowmem(tmp_path, monkeypatch):
     """A fake /proc with low MemAvailable and two RSS-bearing processes."""
     root = tmp_path / "proc"

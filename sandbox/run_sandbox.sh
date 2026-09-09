@@ -45,7 +45,8 @@ bash "$HERE/make_fake_sys.sh" "$FAKESYS" 4
 pass "fake tree ready"
 
 step "2. unit tests (no root)"
-( cd "$REPO" && "$PY" -m pytest -q ) && pass "pytest green"
+( cd "$REPO" && "$PY" -m pytest -q )
+pass "pytest green"
 
 step "3. capture REAL /sys baseline (must be unchanged at the end)"
 REAL_GOV_FILE="/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor"
@@ -77,25 +78,33 @@ step "6. tune --apply (governor × GPU-cap sweep on the fake tree + mock GPU)"
 pass "tune produced a report"
 
 step "7. memguard --dry-run"
-"$QUNER" memguard --dry-run >/dev/null && pass "memguard tick ok (dry-run, no kills)"
+"$QUNER" memguard --dry-run >/dev/null
+pass "memguard tick ok (dry-run, no kills)"
 
 step "8. install (dry-run, then real into the sandbox systemd dir) + verify"
-"$QUNER" install --dry-run >/dev/null && pass "install --dry-run wrote nothing"
+"$QUNER" install --dry-run >/dev/null
+pass "install --dry-run wrote nothing"
 PATH="$RUN/bin:$PATH" "$QUNER" install >/dev/null
-test -f "$SYSD/quner.service" && pass "units written to sandbox systemd dir"
-test -f "$QUNER_LAUNCHER_PATH" && grep -q "quner-launcher" "$QUNER_LAUNCHER_PATH" && pass "root-visible launcher dropped"
+test -f "$SYSD/quner.service"
+pass "units written to sandbox systemd dir"
+test -f "$QUNER_LAUNCHER_PATH"
+grep -q "quner-launcher" "$QUNER_LAUNCHER_PATH"
+pass "root-visible launcher dropped"
 if command -v systemd-analyze >/dev/null 2>&1; then
-  systemd-analyze verify "$SYSD/quner.service" && pass "systemd-analyze verify clean"
+  systemd-analyze verify "$SYSD/quner.service"
+  pass "systemd-analyze verify clean"
 else
   echo "  ! systemd-analyze absent — skipped lint"
 fi
 
 step "9. build wheel + docker clean-host rehearsal"
-( cd "$REPO" && rm -rf dist && uv build --wheel >/dev/null 2>&1 ) \
-  && pass "wheel built: $(ls "$REPO"/dist/*.whl 2>/dev/null | xargs -n1 basename)"
+( cd "$REPO" && rm -rf dist && uv build --wheel >/dev/null 2>&1 )
+pass "wheel built: $(ls "$REPO"/dist/*.whl 2>/dev/null | xargs -n1 basename)"
 if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
-  docker build -q -f "$HERE/Dockerfile" -t quner-sbx "$REPO" >/dev/null && pass "docker build OK (doctor+install --dry-run ran in a clean container)"
-  docker run --rm quner-sbx quner doctor >/dev/null && pass "docker run doctor OK"
+  docker build -q -f "$HERE/Dockerfile" -t quner-sbx "$REPO" >/dev/null
+  pass "docker build OK (doctor+install --dry-run ran in a clean container)"
+  docker run --rm quner-sbx quner doctor >/dev/null
+  pass "docker run doctor OK"
 else
   echo "  ! docker not usable — skipped container rehearsal"
 fi
